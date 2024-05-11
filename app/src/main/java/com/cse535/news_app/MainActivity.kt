@@ -1,7 +1,15 @@
 package com.cse535.news_app
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
+import android.location.Location
+import android.location.LocationProvider
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -32,13 +40,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import com.cse535.news_app.ui.theme.News_appTheme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,6 +64,17 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     MainScreen()
+                    val fusedLocationClient= LocationServices.getFusedLocationProviderClient(this)
+//                    var lat = 0.0
+//                    var long = 0.0
+//                    getLatLong(fusedLocationClient, this, { pair ->
+//                        lat = pair.first
+//                        long = pair.second
+//                        getCurrentCity(this, lat, long)
+//                    })
+                    //Log.d("City", getCurrentCity(this))
+                    //val a = getCurrentCity(this, lat, long)
+                    //Log.d("City", a)
                 }
             }
         }
@@ -157,13 +181,14 @@ fun NewsList(headlines: List<String>) {
             SingleNews(headlines[index])
         }
     }
+
 }
 
 @Composable
 fun SingleNews(headline: String){
     Button (onClick = { /*TODO*/ },
     modifier = Modifier
-        .padding(16.dp)
+        .padding(4.dp)
         .fillMaxWidth()
         .background(MaterialTheme.colorScheme.primary)
         )
@@ -173,10 +198,39 @@ fun SingleNews(headline: String){
 }
 
 
+
 fun getDummyHeadlines(num: Int): List<String> {
     val headlines = mutableListOf<String>()
     for (i in 1..num) {
         headlines.add("Headline $i")
     }
     return headlines
+}
+
+fun getCurrentCity(context: Context, lat: Double, long: Double): String {
+    val geocoder =  Geocoder(context, Locale.getDefault());
+
+    val addr = geocoder.getFromLocation(lat, long, 1, )
+    Log.d("City", addr.toString())
+    Log.d("City", addr?.get(0)?.locality.toString())
+    return addr?.get(0)?.locality ?: "Delhi"
+}
+
+
+fun getLatLong(locationClient: FusedLocationProviderClient, context: Context, callback: (Pair<Double, Double>) -> Unit) {
+    try {
+        locationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            if (location != null) {
+                val lat = location.latitude
+                val long = location.longitude
+                callback(Pair(lat, long))
+            } else {
+                // Handle case where location is null
+                callback(Pair(0.0, 0.0))
+            }
+        }
+    } catch (e: SecurityException) {
+        // Handle security exception
+        callback(Pair(0.0, 0.0))
+    }
 }
