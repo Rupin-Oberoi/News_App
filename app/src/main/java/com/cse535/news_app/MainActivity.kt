@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,18 +30,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,6 +58,8 @@ import androidx.core.app.ActivityCompat
 import com.cse535.news_app.ui.theme.News_appTheme
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
@@ -63,7 +72,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen()
+                    MainScreen(this)
                     val fusedLocationClient= LocationServices.getFusedLocationProviderClient(this)
 //                    var lat = 0.0
 //                    var long = 0.0
@@ -83,31 +92,49 @@ class MainActivity : ComponentActivity() {
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MainScreen() {
-    Scaffold(topBar = {MainTopBar()} ,
-        content = {Column (
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Spacer (modifier = Modifier.padding(60.dp))
-            NewsList(headlines = getDummyHeadlines(40))
-        } })
+fun MainScreen(context: Context) {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val coroutineScope = rememberCoroutineScope()
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = { drawerContent(drawerState, coroutineScope) },
+        content = {
+            Scaffold(
+                topBar = { MainTopBar(drawerState, coroutineScope) },
+                content = { paddingValues ->
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                    ) {
+                        Spacer(modifier = Modifier.padding(60.dp))
+                        NewsList(headlines = getDummyHeadlines(40), context)
+                    }
+                }
+            )
+        }
+    )
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTopBar() {
+fun MainTopBar(drawerState: DrawerState, coroutineScope: CoroutineScope) {
     Column (modifier =  Modifier.padding(vertical = 2.dp)){
     TopAppBar(
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically
-            ) {
+            ) {IconButton(onClick = {
+                coroutineScope.launch {
+                    drawerState.open()
+            }}){
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = null,
-                    tint = Color.Black,
-                    modifier = Modifier.clickable { /* Handle menu icon click */ }
-                )
+                    tint = Color.Black
+                )}
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "News App",
@@ -134,7 +161,8 @@ fun MainTopBar() {
         )
 
     )
-    Row (modifier = Modifier.fillMaxWidth()
+    Row (modifier = Modifier
+        .fillMaxWidth()
         .padding(horizontal = 5.dp)
         .horizontalScroll(rememberScrollState())){
         Button (onClick = { /*TODO*/ },
@@ -174,18 +202,18 @@ fun MainTopBar() {
 }
 
 @Composable
-fun NewsList(headlines: List<String>) {
+fun NewsList(headlines: List<String>, context:Context) {
     // Add LazyColumn here
     LazyColumn (modifier = Modifier.fillMaxSize()){
         items(headlines.size) { index ->
-            SingleNews(headlines[index])
+            SingleNews(headlines[index], context)
         }
     }
 
 }
 
 @Composable
-fun SingleNews(headline: String){
+fun SingleNews(headline: String, context: Context){
     Button (onClick = { /*TODO*/ },
     modifier = Modifier
         .padding(4.dp)
@@ -232,5 +260,45 @@ fun getLatLong(locationClient: FusedLocationProviderClient, context: Context, ca
     } catch (e: SecurityException) {
         // Handle security exception
         callback(Pair(0.0, 0.0))
+    }
+}
+
+@Composable
+fun DrawerHeader() {
+    Box (modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp)) {
+        Text(text = "News App", style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+fun DrawerBody(drawerState: DrawerState, coroutineScope: CoroutineScope){
+    Column(modifier = Modifier.padding(vertical = 8.dp)){
+        IconButton(onClick = {
+            coroutineScope.launch {
+                drawerState.close()
+            }
+        }) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.Black
+            )
+        }
+        IconButton(onClick = { /*TODO*/ }) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Back",
+                tint = Color.Black
+            )
+        }
+    }
+}
+@Composable
+fun drawerContent (drawerState: DrawerState, coroutineScope: CoroutineScope){
+    Column {
+        DrawerHeader()
+        DrawerBody(drawerState, coroutineScope)
     }
 }
