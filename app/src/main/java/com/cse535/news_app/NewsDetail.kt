@@ -1,5 +1,6 @@
 package com.cse535.news_app
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,6 +22,10 @@ class NewsDetail : ComponentActivity() {
     companion object {
         const val NEWS_DETAIL_TEXT = "news_detail_text"
         const val NEWS_DETAIL_TITLE = "news_detail_title"
+        const val NEWS_DETAIL_URL = "news_detail_url"
+        const val NEWS_DETAIL_IMAGE_URL = "news_detail_image"
+        const val NEWS_DETAIL_SOURCE = "news_detail_source"
+        const val NEWS_DETAIL_TIME = "news_detail_time"
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,21 +36,19 @@ class NewsDetail : ComponentActivity() {
         }
     }
 }
-
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun NewsDetailScreen(title: String, txt: String, context: Context) {
-    Column(){
-    Text(text = txt)
-        Button (onClick = { shareNews(txt, context) }, // Call shareNews function when button is clicked
-            modifier = Modifier
-                .padding(4.dp)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primary)
-        )
-        {
-            Text(text = "share")
+    Scaffold(
+        topBar = { NewsDetailTopBar() },
+        content = {
+            paddingValues ->
+            Column(){
+                git 
+            }
         }
-    }
+    )
+
 }
 
 @Composable

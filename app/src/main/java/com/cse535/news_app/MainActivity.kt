@@ -73,8 +73,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Locale
 import android.content.res.Configuration
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Nightlight
+import androidx.compose.runtime.LaunchedEffect
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -118,6 +122,8 @@ fun isSystemInDarkTheme(context: Context): Boolean {
 fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
+    val newsResponse = remember { mutableStateOf<NewsResponse?>(null) }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = { drawerContent(drawerState, coroutineScope) },
@@ -132,7 +138,24 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                             .padding(paddingValues)
                     ) {
                         Spacer(modifier = Modifier.padding(60.dp))
-                        NewsList(headlines = getDummyHeadlines(40), context)
+                        //NewsList(headlines = getDummyHeadlines(40), context)
+                        LaunchedEffect(Unit) {
+                            val newsResponseState = newsResponse
+                            getGlobalNews(object : NewsCallback {
+                                override fun onSuccess(newsResponse: NewsResponse) {
+                                    newsResponseState.value = newsResponse
+                                    Log.d("news", newsResponse.articles.toString())
+                                }
+
+                                override fun onFailure(message: String) {
+                                    Log.d("News", message)
+                                }
+                            })
+                        }
+                        newsResponse.value?.let {
+                            NewsList(it.articles, context)
+                        }
+
                     }
                 }
             )
@@ -180,7 +203,7 @@ fun MainTopBar(drawerState: DrawerState, coroutineScope: CoroutineScope, toggleD
             IconButton(
                 onClick = toggleDarkMode
             ) {
-                val icon = if (isSystemInDarkTheme()) Icons.Default.Favorite else Icons.Default.FavoriteBorder
+                val icon = if (isSystemInDarkTheme()) Icons.Default.LightMode else Icons.Default.DarkMode
                 Icon(
                     imageVector = icon,
                     contentDescription = "Toggle Dark Mode",
@@ -236,22 +259,30 @@ fun MainTopBar(drawerState: DrawerState, coroutineScope: CoroutineScope, toggleD
 }
 
 @Composable
-fun NewsList(headlines: List<String>, context:Context) {
+fun NewsList(articles: List<Article>, context:Context) {
     // Add LazyColumn here
     LazyColumn (modifier = Modifier.fillMaxSize()){
-        items(headlines.size) { index ->
-            SingleNews(headlines[index], context)
+        items(articles.size) { index ->
+            SingleNews(articles[index], context)
         }
     }
 
 }
 
+/* gonna send a list of strings
+list -> headline, content, URL, imageURL, source, time
+*/
+
 @Composable
-fun SingleNews(headline: String, context: Context){
+fun SingleNews(article: Article, context: Context){
     Button (onClick = {
         val intent = Intent(context, NewsDetail::class.java).apply{
-            putExtra(NewsDetail.NEWS_DETAIL_TEXT, headline)
-            putExtra(NewsDetail.NEWS_DETAIL_TITLE, headline)
+            putExtra(NewsDetail.NEWS_DETAIL_TITLE, article.title)
+            putExtra(NewsDetail.NEWS_DETAIL_TEXT, article.content)
+            putExtra(NewsDetail.NEWS_DETAIL_URL, article.url.toString())
+            putExtra(NewsDetail.NEWS_DETAIL_IMAGE_URL, article.urlToImage)
+            putExtra(NewsDetail.NEWS_DETAIL_SOURCE, article.source.name)
+            putExtra(NewsDetail.NEWS_DETAIL_TIME, article.publishedAt)
         }
         context.startActivity(intent)
     },
@@ -261,9 +292,9 @@ fun SingleNews(headline: String, context: Context){
         .background(MaterialTheme.colorScheme.primary)
         )
          {
-        Text(text = headline)
+        Text(text = article.title)
     }
-    NewsText(text = "hi this is a accessibility service")
+
 }
 
 
