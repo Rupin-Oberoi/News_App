@@ -73,6 +73,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Locale
 import android.content.res.Configuration
+import android.preference.PreferenceManager
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -126,9 +127,12 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
     val newsList = remember {
         mutableStateOf<List<Article>>(emptyList())
     }
+    val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+    val prefLang = sharedPreferences.getString("selected_language", "en") ?: "en"
+
     ModalNavigationDrawer(
         drawerState = drawerState,
-        drawerContent = { drawerContent(drawerState, coroutineScope) },
+        drawerContent = { drawerContent(drawerState, coroutineScope, context) },
         content = {
 
             Scaffold(
@@ -145,7 +149,7 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                             Button(
                                 onClick = {
                                     coroutineScope.launch() {
-                                        newsList.value = getCategoryNewsList("general")
+                                        newsList.value = getCategoryNewsList("general", prefLang)
                                     }
                                           },
                                 modifier = Modifier
@@ -158,7 +162,7 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                             Button(
                                 onClick = {
                                     coroutineScope.launch() {
-                                        newsList.value = getCategoryNewsList("technology")
+                                        newsList.value = getCategoryNewsList("technology", prefLang)
                                         Log.d("News_2", newsList.value.toString())
                                     }
                                           },
@@ -172,7 +176,7 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                             Button(
                                 onClick = {
                                     coroutineScope.launch() {
-                                        newsList.value = getCategoryNewsList("sports")
+                                        newsList.value = getCategoryNewsList("sports", prefLang)
                                     }
                                 },
                                 modifier = Modifier
@@ -378,7 +382,7 @@ fun DrawerHeader() {
 }
 
 @Composable
-fun DrawerBody(drawerState: DrawerState, coroutineScope: CoroutineScope){
+fun DrawerBody(drawerState: DrawerState, coroutineScope: CoroutineScope, context: Context){
     Column(modifier = Modifier.padding(vertical = 8.dp)){
         IconButton(onClick = {
             coroutineScope.launch {
@@ -391,7 +395,10 @@ fun DrawerBody(drawerState: DrawerState, coroutineScope: CoroutineScope){
                 tint = Color.Black
             )
         }
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(onClick = {
+            val intent = Intent(context, Settings::class.java)
+            context.startActivity(intent)
+        }) {
             Icon(
                 imageVector = Icons.Default.Settings,
                 contentDescription = "Back",
@@ -401,10 +408,10 @@ fun DrawerBody(drawerState: DrawerState, coroutineScope: CoroutineScope){
     }
 }
 @Composable
-fun drawerContent (drawerState: DrawerState, coroutineScope: CoroutineScope){
+fun drawerContent (drawerState: DrawerState, coroutineScope: CoroutineScope, context: Context){
     Column {
         DrawerHeader()
-        DrawerBody(drawerState, coroutineScope)
+        DrawerBody(drawerState, coroutineScope, context)
     }
 }
 
@@ -446,9 +453,9 @@ fun NewsText(
     )
 }
 
-suspend fun getCategoryNewsList(category: String): List<Article> {
+suspend fun getCategoryNewsList(category: String, lang: String): List<Article> {
     return suspendCoroutine { continuation ->
-        getNewsByCategory(category, object : NewsCallback {
+        getNewsByCategory(category, lang, object : NewsCallback {
             override fun onSuccess(newsResponse: NewsResponse) {
                 val newsList = newsResponse.articles
                 Log.d("News_1", newsList.toString())

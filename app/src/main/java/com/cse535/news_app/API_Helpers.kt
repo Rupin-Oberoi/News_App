@@ -7,14 +7,20 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-fun getNewsByCategory(category: String, callback: NewsCallback) {
+fun getNewsByCategory(category: String, lang: String = "en", callback: NewsCallback) {
     val retrofit = Retrofit.Builder()
         .baseUrl("https://newsapi.org/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+    val baseUrl = "https://newsapi.org/"
+    val apiKey = ApiKeys.NEWS_API_KEY
+    val urlString = "$baseUrl/v2/top-headlines?category=$category&apiKey=$apiKey&language=$lang"
+
+    // Print the URL string
+    Log.d("URL","Querying URL: $urlString")
 
     val apiService = retrofit.create(NewsRetroInterface::class.java)
-    val call = apiService.getCategoryNews(category, ApiKeys.NEWS_API_KEY)
+    val call = apiService.getCategoryNews(category, ApiKeys.NEWS_API_KEY, lang)
     call.enqueue(object : Callback<NewsResponse> {
         override fun onResponse(call: Call<NewsResponse>, response: Response<NewsResponse>) {
             if (response.isSuccessful) {
@@ -123,6 +129,8 @@ fun getGlobalNews(callback: NewsCallback) {
         }
     })
 }
+
+
 
 interface NewsCallback {
     fun onSuccess(newsResponse: NewsResponse)
