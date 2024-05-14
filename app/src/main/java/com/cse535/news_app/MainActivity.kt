@@ -516,25 +516,6 @@ suspend fun getCategoryNewsList(category: String, lang: String): List<Article> {
             override fun onSuccess(newsResponse: NewsResponse) {
                 val newsList = newsResponse.articles
                 Log.d("News_1", newsList.toString())
-                CoroutineScope(Dispatchers.IO).launch {
-                    newsList.forEach {article ->
-                        article.isBookmarked = false
-                        database.articleDao().insertArticle(
-                            ArticleEntity(
-                                url = article.url,
-                                sourceId = article.source.id,
-                                sourceName = article.source.name,
-                                author = article.author,
-                                title = article.title,
-                                description = article.description,
-                                urlToImage = article.urlToImage,
-                                publishedAt = article.publishedAt,
-                                content = article.content,
-                                isBookmarked = article.isBookmarked
-                            )
-                        )
-                    }
-                }
                 continuation.resume(newsList)
             }
 
