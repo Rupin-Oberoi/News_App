@@ -38,13 +38,21 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -96,6 +104,17 @@ class NewsDetail : ComponentActivity(), TextToSpeech.OnInitListener {
 fun playNews(text: String, tts: TextToSpeech) {
     tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
 }
+
+fun stopNews(tts: TextToSpeech) {
+    tts.stop()
+}
+
+fun playAtSpeedNews(text: String, tts: TextToSpeech, speed: Float) {
+    tts.stop()
+    tts.setSpeechRate(speed)
+    tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
+}
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -157,8 +176,54 @@ fun ImageFromUrl(imageUrl: String) {
     Image(
         painter = rememberAsyncImagePainter(imageUrl),
         contentDescription = null,
-        modifier = Modifier.heightIn(200.dp).fillMaxWidth().padding(16.dp)
+        modifier = Modifier
+            .heightIn(200.dp)
+            .fillMaxWidth()
+            .padding(16.dp)
     )
+}
+
+class Item(
+    val title: String,
+    val function: () -> Unit
+)
+
+
+@Composable
+fun MenuButton(
+    text: String,
+    menuItems: List<Item>,
+    onItemClick: (String) -> Unit
+) {
+    val isMenuExpanded =  remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .wrapContentSize(Alignment.TopStart)
+            .padding(16.dp)
+    ) {
+        Button(
+            onClick = { isMenuExpanded.value = true }
+        ) {
+            Text(text)
+        }
+
+        DropdownMenu(
+            expanded = isMenuExpanded.value,
+            onDismissRequest = { isMenuExpanded.value = false },
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+        ) {
+            menuItems.forEach { item ->
+                DropdownMenuItem(text = { Text(item.title) }, onClick = {
+                    item.function()
+                    onItemClick(item.title)
+                    isMenuExpanded.value = false
+                })
+                Spacer(modifier = Modifier.heightIn(16.dp))
+            }
+        }
+    }
 }
 
 
@@ -179,6 +244,12 @@ fun NewsDetailTopBar(shareText:String, url: String, context: Context,showWebView
             }
             IconButton(onClick = { playNews(content, tts)}){
                 Icon(Icons.Default.PlayCircle, contentDescription = "Play News")
+            }
+            IconButton(onClick = { stopNews(tts) }) {
+                Icon(Icons.Default.Stop, contentDescription = "Stop Play News")
+            }
+            IconButton(onClick = { playAtSpeedNews(content, tts, 1.5f) }) {
+                Icon(Icons.Default.FastForward, contentDescription = "Fast Forward")
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
