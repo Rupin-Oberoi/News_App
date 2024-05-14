@@ -30,4 +30,6 @@ interface NewsRetroInterface {
         @Query("country") country: String = "us",
         @Query("language") language: String = "en"
     ): Call<NewsResponse>
+
+
 }
