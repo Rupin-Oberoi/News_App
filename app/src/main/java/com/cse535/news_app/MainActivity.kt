@@ -1,5 +1,7 @@
 package com.cse535.news_app
 
+import AppDatabase
+import MyApp.Companion.database
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -91,7 +93,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.cse535.news_app.MyApp.Companion.database
+import androidx.room.Room
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -102,11 +104,19 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        lateinit var database: AppDatabase
+            private set
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Accessing the database
-        val database = MyApp.database
+
+
+        database = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java, "news-database"
+        ).build()
 
         setContent {
             val context = LocalContext.current
