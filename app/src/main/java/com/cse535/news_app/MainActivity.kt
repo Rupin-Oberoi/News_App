@@ -81,6 +81,8 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import android.content.res.Configuration
 import android.preference.PreferenceManager
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -162,6 +164,7 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                                 .fillMaxWidth()
                                 .padding(horizontal = 5.dp)
                                 .horizontalScroll(rememberScrollState())
+                                .background(Color.LightGray)
                         ) {
                             Button(
                                 onClick = {
@@ -171,7 +174,9 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                                           },
                                 modifier = Modifier
                                     .padding(16.dp)
-                                    .background(MaterialTheme.colorScheme.primary)
+                                    .background(MaterialTheme.colorScheme.primary,shape = RoundedCornerShape(32.dp))
+                                    .height(48.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp)
                             )
                             {
                                 Text(text = "General")
@@ -185,7 +190,9 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                                           },
                                 modifier = Modifier
                                     .padding(16.dp)
-                                    .background(MaterialTheme.colorScheme.primary)
+                                    .background(MaterialTheme.colorScheme.primary,shape = RoundedCornerShape(32.dp))
+                                    .height(48.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp)
                             )
                             {
                                 Text(text = "Technology")
@@ -198,7 +205,9 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                                 },
                                 modifier = Modifier
                                     .padding(16.dp)
-                                    .background(MaterialTheme.colorScheme.primary)
+                                    .background(MaterialTheme.colorScheme.primary,shape = RoundedCornerShape(32.dp))
+                                    .height(48.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp)
                             )
                             {
                                 Text(text = "Sports")
@@ -216,7 +225,9 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                                           },
                                 modifier = Modifier
                                     .padding(16.dp)
-                                    .background(MaterialTheme.colorScheme.primary)
+                                    .background(MaterialTheme.colorScheme.primary,shape = RoundedCornerShape(32.dp))
+                                    .height(48.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp)
                             )
                             {
                                 Text(text = "Near Me")
@@ -260,15 +271,6 @@ fun MainTopBar(drawerState: DrawerState, coroutineScope: CoroutineScope, toggleD
         },
 
         actions = {
-            IconButton(
-                onClick = { /* Handle search icon click */ }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = Color.Black
-                )
-            }
             IconButton(
                 onClick = toggleDarkMode
             ) {
