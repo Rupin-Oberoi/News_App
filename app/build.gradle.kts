@@ -74,5 +74,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("androidx.compose.material:material-icons-extended:1.5.1")
     implementation("io.coil-kt:coil-compose:2.0.0-rc01")
+    implementation("com.google.android.gms:play-services-ads-identifier:18.0.1")
+    implementation("com.google.android.gms:play-services-basement:18.0.0")
+    implementation("androidx.browser:browser:1.5.0")
 
 }
