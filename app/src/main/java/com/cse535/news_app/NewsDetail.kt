@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
 class NewsDetail : ComponentActivity() {
 
     // Accessing the database
-    val database = MyApp.database
+    val database = MainActivity.database
     companion object {
         const val NEWS_DETAIL_TEXT = "news_detail_text"
         const val NEWS_DETAIL_TITLE = "news_detail_title"
