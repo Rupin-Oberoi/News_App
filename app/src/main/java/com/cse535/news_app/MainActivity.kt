@@ -97,6 +97,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
+import java.util.Date
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -141,11 +142,16 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     val prefLang = sharedPreferences.getString("selected_language", "en") ?: "en"
 
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            newsList.value = getCategoryNewsList("general", prefLang)
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = { drawerContent(drawerState, coroutineScope, context) },
         content = {
-
             Scaffold(
                 topBar = { MainTopBar(drawerState, coroutineScope, toggleDarkMode, context) },
                 content = { paddingValues ->
@@ -361,7 +367,13 @@ fun SingleNews(article: Article, context: Context) {
 private fun formatDate(dateString: String): String {
     // Convert the date string to a Date object
     val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
-    val date = dateFormat.parse(dateString)
+    var date = Date()
+    try{
+        date = dateFormat.parse(dateString)
+    }
+    catch(e: Exception){
+        return dateString
+    }
 
     // Format the Date object to a desired pattern
     val outputFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
