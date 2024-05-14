@@ -16,6 +16,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -41,6 +43,8 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
@@ -62,6 +66,9 @@ import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -79,13 +86,17 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Nightlight
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -290,30 +301,71 @@ list -> headline, content, URL, imageURL, source, time
 */
 
 @Composable
-fun SingleNews(article: Article, context: Context){
-    Button (onClick = {
-        val intent = Intent(context, NewsDetail::class.java).apply{
-            putExtra(NewsDetail.NEWS_DETAIL_TITLE, article.title)
-            putExtra(NewsDetail.NEWS_DETAIL_TEXT, article.content)
-            putExtra(NewsDetail.NEWS_DETAIL_URL, article.url.toString())
-            putExtra(NewsDetail.NEWS_DETAIL_IMAGE_URL, article.urlToImage)
-            putExtra(NewsDetail.NEWS_DETAIL_SOURCE, article.source.name)
-            putExtra(NewsDetail.NEWS_DETAIL_TIME, article.publishedAt)
+fun SingleNews(article: Article, context: Context) {
+    Card(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth()
+            .clickable {
+                val intent = Intent(context, NewsDetail::class.java).apply {
+                    putExtra(NewsDetail.NEWS_DETAIL_TITLE, article.title)
+                    putExtra(NewsDetail.NEWS_DETAIL_TEXT, article.content)
+                    putExtra(NewsDetail.NEWS_DETAIL_URL, article.url.toString())
+                    putExtra(NewsDetail.NEWS_DETAIL_IMAGE_URL, article.urlToImage)
+                    putExtra(NewsDetail.NEWS_DETAIL_SOURCE, article.source.name)
+                    putExtra(NewsDetail.NEWS_DETAIL_TIME, article.publishedAt)
+                }
+                context.startActivity(intent)
+            },
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (article.urlToImage != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(article.urlToImage),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = article.source?.name ?: "",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = article.title ?: "",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = article.publishedAt?.let { formatDate(it) } ?: "",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
         }
-        context.startActivity(intent)
-    },
-    modifier = Modifier
-        .padding(4.dp)
-        .fillMaxWidth()
-        .background(MaterialTheme.colorScheme.primary)
-        )
-         {
-        Text(text = article.title)
     }
-
 }
 
+private fun formatDate(dateString: String): String {
+    // Convert the date string to a Date object
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+    val date = dateFormat.parse(dateString)
 
+    // Format the Date object to a desired pattern
+    val outputFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+    return outputFormat.format(date)
+}
 
 fun getDummyHeadlines(num: Int): List<String> {
     val headlines = mutableListOf<String>()
