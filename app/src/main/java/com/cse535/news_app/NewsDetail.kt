@@ -1,5 +1,7 @@
 package com.cse535.news_app
 
+import AppDatabase
+import ArticleEntity
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -40,8 +42,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class NewsDetail : ComponentActivity() {
+
+    // Accessing the database
+    val database = MyApp.database
     companion object {
         const val NEWS_DETAIL_TEXT = "news_detail_text"
         const val NEWS_DETAIL_TITLE = "news_detail_title"
@@ -57,17 +65,29 @@ class NewsDetail : ComponentActivity() {
         val imageUrl = intent.getStringExtra(NEWS_DETAIL_IMAGE_URL) ?: ""
         val url = intent.getStringExtra(NEWS_DETAIL_URL) ?: ""
         setContent() {
-            NewsDetailScreen(title, txt, imageUrl, url, this)
+            NewsDetailScreen(title, txt, imageUrl, url, this,database)
         }
+    }
+}
+fun bookmarkNews(title: String, txt: String, imageUrl: String, url: String, database: AppDatabase) {
+    val articleEntity = ArticleEntity(
+        title = title,
+        txt = txt,
+        imageUrl = imageUrl,
+        url = url
+    )
+
+    CoroutineScope(Dispatchers.IO).launch {
+        database.articleDao().insertArticle(articleEntity)
     }
 }
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun NewsDetailScreen(title: String, content: String,imageURL: String, url:String, context: Context) {
+fun NewsDetailScreen(title: String, content: String,imageURL: String, url:String, context: Context,database: AppDatabase) {
     val shareText = "Check out this news article: $title\n$url"
     val showWebView = remember { mutableStateOf(false) }
     Scaffold(
-        topBar = { NewsDetailTopBar(shareText, url, context, showWebView) },
+        topBar = { NewsDetailTopBar(shareText, url, context, showWebView,title,content,imageURL,database) },
         content = {
             paddingValues ->
             //Spacer(modifier = Modifier.padding(30.dp))
@@ -104,7 +124,10 @@ fun ImageFromUrl(imageUrl: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewsDetailTopBar(shareText:String, url: String, context: Context,showWebView: MutableState<Boolean>) {
+fun NewsDetailTopBar(shareText:String, url: String, context: Context,showWebView: MutableState<Boolean>,title: String,
+                     txt: String,
+                     imageUrl: String,
+                     database: AppDatabase) {
         Log.d("NewsDetailTopBar", "Open in Browser URL: $url")
         TopAppBar(title = { /*TODO*/
         Row(){
@@ -116,6 +139,9 @@ fun NewsDetailTopBar(shareText:String, url: String, context: Context,showWebView
                 }
                 IconButton(onClick = { showWebView.value = !showWebView.value }) {
                     Icon(Icons.Default.OpenInBrowser, contentDescription = "Open in Browser")
+                }
+                IconButton(onClick = { bookmarkNews(title,txt,imageUrl,url,database) }) {
+                    Icon(Icons.Default.OpenInBrowser, contentDescription = "Bookmark")
                 }
         },
             colors = TopAppBarDefaults.topAppBarColors(
