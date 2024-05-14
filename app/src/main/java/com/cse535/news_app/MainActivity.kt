@@ -79,6 +79,14 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Nightlight
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,18 +102,10 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     MainScreen(this, isDarkMode.value) {
-                        isDarkMode.value = !isDarkMode.value}
-                    val fusedLocationClient= LocationServices.getFusedLocationProviderClient(this)
-//                    var lat = 0.0
-//                    var long = 0.0
-//                    getLatLong(fusedLocationClient, this, { pair ->
-//                        lat = pair.first
-//                        long = pair.second
-//                        getCurrentCity(this, lat, long)
-//                    })
-                    //Log.d("City", getCurrentCity(this))
-                    //val a = getCurrentCity(this, lat, long)
-                    //Log.d("City", a)
+                        isDarkMode.value = !isDarkMode.value
+                    }
+//                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+//                    val city = getCurrentCity(fusedLocationClient, this)
                 }
             }
         }
@@ -123,39 +123,86 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
     val newsResponse = remember { mutableStateOf<NewsResponse?>(null) }
-
+    val newsList = remember {
+        mutableStateOf<List<Article>>(emptyList())
+    }
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = { drawerContent(drawerState, coroutineScope) },
         content = {
+
             Scaffold(
-                topBar = { MainTopBar(drawerState, coroutineScope, toggleDarkMode) },
+                topBar = { MainTopBar(drawerState, coroutineScope, toggleDarkMode, context) },
                 content = { paddingValues ->
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues)
-                    ) {
-                        Spacer(modifier = Modifier.padding(60.dp))
-                        //NewsList(headlines = getDummyHeadlines(40), context)
-                        LaunchedEffect(Unit) {
-                            val newsResponseState = newsResponse
-                            getGlobalNews(object : NewsCallback {
-                                override fun onSuccess(newsResponse: NewsResponse) {
-                                    newsResponseState.value = newsResponse
-                                    Log.d("news", newsResponse.articles.toString())
-                                }
-
-                                override fun onFailure(message: String) {
-                                    Log.d("News", message)
-                                }
-                            })
+                    Column() {
+                        Spacer(modifier = Modifier.padding(40.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 5.dp)
+                                .horizontalScroll(rememberScrollState())
+                        ) {
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch() {
+                                        newsList.value = getCategoryNewsList("general")
+                                    }
+                                          },
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .background(MaterialTheme.colorScheme.primary)
+                            )
+                            {
+                                Text(text = "General")
+                            }
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch() {
+                                        newsList.value = getCategoryNewsList("technology")
+                                        Log.d("News_2", newsList.value.toString())
+                                    }
+                                          },
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .background(MaterialTheme.colorScheme.primary)
+                            )
+                            {
+                                Text(text = "Technology")
+                            }
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch() {
+                                        newsList.value = getCategoryNewsList("sports")
+                                    }
+                                },
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .background(MaterialTheme.colorScheme.primary)
+                            )
+                            {
+                                Text(text = "Sports")
+                            }
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch() {
+                                        val locationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+                                        val city = getCurrentCity(locationProviderClient, context)
+                                        delay(1500)
+                                        Log.d("News", city)
+                                        newsList.value = getKeywordNewsList(city.lowercase())
+                                    }
+                                          },
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .background(MaterialTheme.colorScheme.primary)
+                            )
+                            {
+                                Text(text = "Near Me")
+                            }
                         }
-                        newsResponse.value?.let {
-                            NewsList(it.articles, context)
-                        }
 
+                        Log.d("News", newsList.value.toString())
+                        NewsList(articles = newsList.value, context = context)
                     }
                 }
             )
@@ -166,7 +213,7 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTopBar(drawerState: DrawerState, coroutineScope: CoroutineScope, toggleDarkMode: () -> Unit) {
+fun MainTopBar(drawerState: DrawerState, coroutineScope: CoroutineScope, toggleDarkMode: () -> Unit, context: Context) {
     Column (modifier =  Modifier.padding(vertical = 2.dp)){
     TopAppBar(
         title = {
@@ -218,42 +265,8 @@ fun MainTopBar(drawerState: DrawerState, coroutineScope: CoroutineScope, toggleD
         )
 
     )
-    Row (modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 5.dp)
-        .horizontalScroll(rememberScrollState())){
-        Button (onClick = { /*TODO*/ },
-            modifier = Modifier
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.primary)
-        )
-        {
-            Text(text = "General")
-        }
-        Button (onClick = { /*TODO*/ },
-            modifier = Modifier
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.primary)
-        )
-        {
-            Text(text = "Technology")
-        }
-        Button (onClick = { /*TODO*/ },
-            modifier = Modifier
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.primary)
-        )
-        {
-            Text(text = "Sports")
-        }
-        Button (onClick = { /*TODO*/ },
-            modifier = Modifier
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.primary)
-        )
-            {
-            Text(text = "Near Me")
-            }
+        val newsList = remember {
+            mutableStateOf<List<Article>>(emptyList())
         }
     }
 }
@@ -266,7 +279,6 @@ fun NewsList(articles: List<Article>, context:Context) {
             SingleNews(articles[index], context)
         }
     }
-
 }
 
 /* gonna send a list of strings
@@ -307,14 +319,35 @@ fun getDummyHeadlines(num: Int): List<String> {
     return headlines
 }
 
-fun getCurrentCity(context: Context, lat: Double, long: Double): String {
-    val geocoder =  Geocoder(context, Locale.getDefault());
+suspend fun getCurrentCity(locationClient: FusedLocationProviderClient, context: Context): String {
+    // Initialize lat and long as nullable Double variables
+    var lat: Double? = null
+    var long: Double? = null
 
-    val addr = geocoder.getFromLocation(lat, long, 1, )
-    Log.d("City", addr.toString())
-    Log.d("City", addr?.get(0)?.locality.toString())
-    return addr?.get(0)?.locality ?: "Delhi"
+    // Use suspendCoroutine to create a suspending function
+    return suspendCoroutine { continuation ->
+        // Call getLatLong to fetch lat and long
+        getLatLong(locationClient, context) { pair ->
+            lat = pair.first
+            long = pair.second
+
+            // Check if lat and long are not null
+            if (lat != null && long != null) {
+                // Use Geocoder to get the city name based on lat and long
+                val geocoder = Geocoder(context, Locale.getDefault())
+                val addr = geocoder.getFromLocation(lat!!, long!!, 1)
+                val cityName = addr?.get(0)?.locality ?: "Delhi"
+
+                // Resume the coroutine with the city name
+                continuation.resume(cityName)
+            } else {
+                // Resume the coroutine with a default city name if lat or long is null
+                continuation.resume("Delhi")
+            }
+        }
+    }
 }
+
 
 
 fun getLatLong(locationClient: FusedLocationProviderClient, context: Context, callback: (Pair<Double, Double>) -> Unit) {
@@ -413,3 +446,36 @@ fun NewsText(
     )
 }
 
+suspend fun getCategoryNewsList(category: String): List<Article> {
+    return suspendCoroutine { continuation ->
+        getNewsByCategory(category, object : NewsCallback {
+            override fun onSuccess(newsResponse: NewsResponse) {
+                val newsList = newsResponse.articles
+                Log.d("News_1", newsList.toString())
+                continuation.resume(newsList)
+            }
+
+            override fun onFailure(message: String) {
+                Log.d("News", message)
+                continuation.resume(emptyList()) // Return empty list on failure
+            }
+        })
+    }
+}
+
+suspend fun getKeywordNewsList(keyword: String): List<Article> {
+    return suspendCoroutine { continuation ->
+        getNewsByKeyword(keyword, object : NewsCallback {
+            override fun onSuccess(newsResponse: NewsResponse) {
+                val newsList = newsResponse.articles
+                Log.d("News_1", newsList.toString())
+                continuation.resume(newsList)
+            }
+
+            override fun onFailure(message: String) {
+                Log.d("News", message)
+                continuation.resume(emptyList()) // Return empty list on failure
+            }
+        })
+    }
+}
