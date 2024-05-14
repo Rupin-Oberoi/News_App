@@ -5,7 +5,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Database
 import androidx.room.RoomDatabase
-
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Room
