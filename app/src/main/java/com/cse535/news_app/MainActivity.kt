@@ -190,8 +190,9 @@ fun MainScreen(context: Context, isDarkMode: Boolean, toggleDarkMode: () -> Unit
                                 onClick = {
                                     coroutineScope.launch() {
                                         val locationProviderClient = LocationServices.getFusedLocationProviderClient(context)
-                                        val city = getCurrentCity(locationProviderClient, context)
+                                        var city = getCurrentCity(locationProviderClient, context)
                                         delay(1500)
+                                        city = "delhi"
                                         Log.d("News", city)
                                         newsList.value = getKeywordNewsList(city.lowercase())
                                     }
