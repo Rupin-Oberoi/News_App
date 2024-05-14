@@ -33,20 +33,34 @@ import android.util.Log
 import androidx.compose.ui.text.font.FontWeight
 import android.net.Uri
 import androidx.compose.material3.Card
+import android.speech.tts.TextToSpeech
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import java.util.Locale
 
-class NewsDetail : ComponentActivity() {
+class NewsDetail : ComponentActivity(), TextToSpeech.OnInitListener {
+
+    private lateinit var tts: TextToSpeech
     companion object {
         const val NEWS_DETAIL_TEXT = "news_detail_text"
         const val NEWS_DETAIL_TITLE = "news_detail_title"
@@ -61,22 +75,39 @@ class NewsDetail : ComponentActivity() {
         val title = intent.getStringExtra(NEWS_DETAIL_TITLE) ?: ""
         val imageUrl = intent.getStringExtra(NEWS_DETAIL_IMAGE_URL) ?: ""
         val url = intent.getStringExtra(NEWS_DETAIL_URL) ?: ""
+        tts = TextToSpeech(this, this)
         setContent() {
-            NewsDetailScreen(title, txt, imageUrl, url, this)
+            NewsDetailScreen(title, txt, imageUrl, url, this, tts)
+        }
+    }
+
+    override fun onInit(status: Int) {
+
+        if (status == TextToSpeech.SUCCESS) {
+            val result = tts.setLanguage(Locale.ENGLISH)
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Toast.makeText(this, "TTS Not Supported for this news", Toast.LENGTH_LONG)
+                    .show()
+            }
         }
     }
 }
+
+fun playNews(text: String, tts: TextToSpeech) {
+    tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
+}
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun NewsDetailScreen(title: String, content: String,imageURL: String, url:String, context: Context) {
+fun NewsDetailScreen(title: String, content: String,imageURL: String, url:String, context: Context, tts: TextToSpeech) {
     val shareText = "Check out this news article: $title\n$url"
     val showWebView = remember { mutableStateOf(false) }
     Scaffold(
-        topBar = { NewsDetailTopBar(shareText, url, context, showWebView) },
+        topBar = { NewsDetailTopBar(shareText, url, context, showWebView, tts, content) },
         content = {
-            paddingValues ->
+                paddingValues ->
             //Spacer(modifier = Modifier.padding(30.dp))
-            Column(modifier = Modifier.padding(paddingValues).fillMaxSize()){
+            Column(modifier = Modifier.padding(paddingValues)){
 
                 if (showWebView.value) {
                     WebViewComposable(
@@ -133,37 +164,46 @@ fun ImageFromUrl(imageUrl: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewsDetailTopBar(shareText:String, url: String, context: Context,showWebView: MutableState<Boolean>) {
-        Log.d("NewsDetailTopBar", "Open in Browser URL: $url")
-        TopAppBar(title = { /*TODO*/
+fun NewsDetailTopBar(shareText:String, url: String, context: Context,showWebView: MutableState<Boolean>, tts: TextToSpeech, content: String) {
+    Log.d("NewsDetailTopBar", "Open in Browser URL: $url")
+    TopAppBar(title = { /*TODO*/
         Row(){
-            Text("News Detail",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Text("News Detail", style = MaterialTheme.typography.bodyLarge)
         }},
-            actions = {
-                IconButton(onClick = { shareNews(shareText, context) }) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Share",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-                IconButton(onClick = { showWebView.value = !showWebView.value }) {
-                    Icon(
-                        imageVector = Icons.Default.OpenInBrowser,
-                        contentDescription = "Open in Browser",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+        actions = {
+            IconButton(onClick = {shareNews(shareText, context)}) {
+                Icon(Icons.Default.Share, contentDescription = "Share")
+            }
+            IconButton(onClick = { showWebView.value = !showWebView.value }) {
+                Icon(Icons.Default.OpenInBrowser, contentDescription = "Open in Browser")
+            }
+            IconButton(onClick = { playNews(content, tts)}){
+                Icon(Icons.Default.PlayCircle, contentDescription = "Play News")
+            }
         },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                titleContentColor = MaterialTheme.colorScheme.primary
-            )
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.primary
         )
+    )
 }
+
+//@Composable
+//fun WebViewComposable(url: String, modifier: Modifier = Modifier) {
+//    val webViewState = rememberWebViewState(url)
+//    AndroidView(
+//        factory = { context ->
+//            WebView(context).apply {
+//                webViewClient = WebViewClient()
+//                settings.javaScriptEnabled = true
+//            }
+//        },
+//        update = { webView ->
+//            webView.loadUrl(webViewState.current)
+//        },
+//        modifier = modifier
+//    )
+//}
 
 @Composable
 fun WebViewComposable(url: String, modifier: Modifier = Modifier) {
