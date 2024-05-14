@@ -91,6 +91,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import com.cse535.news_app.MyApp.Companion.database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -103,6 +104,10 @@ import kotlin.coroutines.suspendCoroutine
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Accessing the database
+        val database = MyApp.database
+
         setContent {
             val context = LocalContext.current
             val isDarkMode = remember { mutableStateOf(isSystemInDarkTheme(context)) }
@@ -511,6 +516,25 @@ suspend fun getCategoryNewsList(category: String, lang: String): List<Article> {
             override fun onSuccess(newsResponse: NewsResponse) {
                 val newsList = newsResponse.articles
                 Log.d("News_1", newsList.toString())
+                CoroutineScope(Dispatchers.IO).launch {
+                    newsList.forEach {article ->
+                        article.isBookmarked = false
+                        database.articleDao().insertArticle(
+                            ArticleEntity(
+                                url = article.url,
+                                sourceId = article.source.id,
+                                sourceName = article.source.name,
+                                author = article.author,
+                                title = article.title,
+                                description = article.description,
+                                urlToImage = article.urlToImage,
+                                publishedAt = article.publishedAt,
+                                content = article.content,
+                                isBookmarked = article.isBookmarked
+                            )
+                        )
+                    }
+                }
                 continuation.resume(newsList)
             }
 
