@@ -443,14 +443,14 @@ fun getLatLong(locationClient: FusedLocationProviderClient, context: Context, ca
 fun DrawerHeader() {
     Box (modifier = Modifier
         .fillMaxWidth()
-        .padding(16.dp)) {
+        .padding(16.dp).background(Color.LightGray)) {
         Text(text = "News App", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
 @Composable
 fun DrawerBody(drawerState: DrawerState, coroutineScope: CoroutineScope, context: Context){
-    Column(modifier = Modifier.padding(vertical = 8.dp)){
+    Column(modifier = Modifier.padding(vertical = 8.dp).background(Color.LightGray).fillMaxWidth()) {
         IconButton(onClick = {
             coroutineScope.launch {
                 drawerState.close()
@@ -476,7 +476,7 @@ fun DrawerBody(drawerState: DrawerState, coroutineScope: CoroutineScope, context
 }
 @Composable
 fun drawerContent (drawerState: DrawerState, coroutineScope: CoroutineScope, context: Context){
-    Column {
+    Column(modifier = Modifier.fillMaxSize(0.4f).background(Color.LightGray)) {
         DrawerHeader()
         DrawerBody(drawerState, coroutineScope, context)
     }
