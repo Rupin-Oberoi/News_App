@@ -32,11 +32,16 @@ import androidx.compose.ui.Modifier
 import android.util.Log
 import androidx.compose.ui.text.font.FontWeight
 import android.net.Uri
+import androidx.compose.material3.Card
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.rememberAsyncImagePainter
@@ -71,7 +76,7 @@ fun NewsDetailScreen(title: String, content: String,imageURL: String, url:String
         content = {
             paddingValues ->
             //Spacer(modifier = Modifier.padding(30.dp))
-            Column(modifier = Modifier.padding(paddingValues)){
+            Column(modifier = Modifier.padding(paddingValues).fillMaxSize()){
 
                 if (showWebView.value) {
                     WebViewComposable(
@@ -82,22 +87,46 @@ fun NewsDetailScreen(title: String, content: String,imageURL: String, url:String
                     )
                 }
                 else{
-                    Text(title, style = MaterialTheme.typography.bodyMedium,
-                        fontWeight= FontWeight.Bold,
-                        modifier = Modifier.padding(16.dp))
-                    ImageFromUrl(imageUrl = imageURL)
-                    Text(content)
+                    NewsContentView(title, content, imageURL)
                 }
             }
         }
     )
 
-}@Composable
+}
+@Composable
+fun NewsContentView(title: String, content: String, imageURL: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            ImageFromUrl(imageUrl = imageURL)
+        }
+        Text(
+            text = content,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+@Composable
 fun ImageFromUrl(imageUrl: String) {
     Image(
         painter = rememberAsyncImagePainter(imageUrl),
         contentDescription = null,
-        modifier = Modifier.heightIn(200.dp).fillMaxWidth()
+        modifier = Modifier.heightIn(200.dp).fillMaxWidth().padding(16.dp)
     )
 }
 
@@ -108,14 +137,25 @@ fun NewsDetailTopBar(shareText:String, url: String, context: Context,showWebView
         Log.d("NewsDetailTopBar", "Open in Browser URL: $url")
         TopAppBar(title = { /*TODO*/
         Row(){
-            Text("News Detail", style = MaterialTheme.typography.bodyLarge)
+            Text("News Detail",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
         }},
             actions = {
-                IconButton(onClick = {shareNews(shareText, context)}) {
-                    Icon(Icons.Default.Share, contentDescription = "Share")
+                IconButton(onClick = { shareNews(shareText, context) }) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
                 IconButton(onClick = { showWebView.value = !showWebView.value }) {
-                    Icon(Icons.Default.OpenInBrowser, contentDescription = "Open in Browser")
+                    Icon(
+                        imageVector = Icons.Default.OpenInBrowser,
+                        contentDescription = "Open in Browser",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
         },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -124,23 +164,6 @@ fun NewsDetailTopBar(shareText:String, url: String, context: Context,showWebView
             )
         )
 }
-
-//@Composable
-//fun WebViewComposable(url: String, modifier: Modifier = Modifier) {
-//    val webViewState = rememberWebViewState(url)
-//    AndroidView(
-//        factory = { context ->
-//            WebView(context).apply {
-//                webViewClient = WebViewClient()
-//                settings.javaScriptEnabled = true
-//            }
-//        },
-//        update = { webView ->
-//            webView.loadUrl(webViewState.current)
-//        },
-//        modifier = modifier
-//    )
-//}
 
 @Composable
 fun WebViewComposable(url: String, modifier: Modifier = Modifier) {
@@ -165,14 +188,7 @@ fun WebViewComposable(url: String, modifier: Modifier = Modifier) {
         modifier = modifier
     )
 }
-//fun openWebPage(url: String, context: Context) {
-//    Log.d("openWebPage", "Opening URL: $url")
-//    val webpage = Uri.parse(url)
-//    val intent = Intent(Intent.ACTION_VIEW, webpage)
-//    if (intent.resolveActivity(context.packageManager) != null) {
-//        context.startActivity(intent)
-//    }
-//}
+
 fun shareNews(news: String, context: Context) {
     val sendIntent: Intent = Intent().apply {
         action = Intent.ACTION_SEND
