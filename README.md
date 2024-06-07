@@ -5,7 +5,6 @@
   <img src="https://github.com/Rupin-Oberoi/News_App/assets/82911845/e27e6640-6619-463f-a7da-f0af76f780d2" width="245" height="500">
   <img src="https://github.com/Rupin-Oberoi/News_App/assets/82911845/a8826ead-56b4-459e-bc31-25f1f92db811" width="245" height="500">
   <img src="https://github.com/Rupin-Oberoi/News_App/assets/82911845/c98d5418-39a1-4526-bc58-637be7602aad" width="245" height="500">
-  <img src="https://github.com/Rupin-Oberoi/News_App/assets/82911845/ca6028d7-fd14-4cb1-abb5-8018528d433a" width="245" height="500">
 </p>
 This is a news application developed in Kotlin and Java using the Android Studio Jellyfish | 2023.3.1 Patch 1 IDE. The application fetches news from various categories and displays them in a user-friendly interface.
 
