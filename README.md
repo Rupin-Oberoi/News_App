@@ -28,7 +28,7 @@ This is a news application developed in Kotlin and Java using the Android Studio
 
 To run the app, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/Rupin-Oberoi/News_App`
+1. Clone the repository: `git clone https://github.com/Rupin-Oberoi/News_App.git`
 
 2. Open the project in Android Studio.
 
